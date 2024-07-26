@@ -3,6 +3,7 @@ const morgan = require('morgan');
 const cors = require('cors');
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
+const adminRoutes = require("./routes/admin");
 const errorHandler = require('./middleware/error');
 const { cloudinaryConfig } = require('./utils/cloudinary');
 const app = express();
@@ -30,6 +31,7 @@ app.get("/event/v1", (req, res) => {
 
 app.use("/event/v1/auth", authRoutes);
 app.use("/event/v1/user", userRoutes);
+app.use("/event/v1/admin", adminRoutes);
 
 
 app.all("*", (req, res)=>{

@@ -1,6 +1,6 @@
-const Users = require("./../models/User");
+const Users = require("../models/User");
 const jwt = require("jsonwebtoken");
-const AppError = require("./../utils/AppError");
+const AppError = require("../utils/AppError");
 
 const protectRoute = async (req, res, next) => {
   try {
@@ -10,22 +10,18 @@ const protectRoute = async (req, res, next) => {
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
     ) {
-      console.log(req.headers.authorization);
       token = req.headers.authorization.split(" ")[1];
     }
 
-    console.log(token);
-
     if (!token) {
-      throw new AppError("You're not logged in, please login", 401);
+      return next(new AppError("You're not logged in, please login", 401));
     }
 
-    const decoded = jwt.verify(token, process.env.jwtSecret);
-    console.log(decoded);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await Users.findOne(decoded.id);
+    const user = await Users.findById(decoded.id);
     if (!user) {
-      throw new AppError("User with specified ID not found", 404);
+      return next(new AppError("User with specified ID not found", 404));
     }
 
     req.user = user;
@@ -38,19 +34,17 @@ const protectRoute = async (req, res, next) => {
 const verifyIsAdmin = async (req, res, next) => {
   try {
     if (req.user.role !== "admin") {
-      throw new Error(
-        "You are not authorized to access this route, this route belongs to admin users"
-      );
+      return next(new AppError(
+        "You are not authorized to access this route, this route belongs to admin users",
+        403
+      ));
     }
     next();
   } catch (error) {
-    console.log(error);
-    res.status(401).json({
-      status: "fail",
-      message: error.message,
-    });
+    next(new AppError("Failed to verify admin status", 500));
   }
 };
 
+const protectAdminRoute = [protectRoute, verifyIsAdmin];
 
-module.exports = { protectRoute, verifyIsAdmin }
+module.exports = { protectRoute, verifyIsAdmin, protectAdminRoute };
